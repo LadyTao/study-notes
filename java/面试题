@@ -14,3 +14,7 @@ HashMap 的长度为什么是2的幂次方
 HashSet 和 HashMap 区别
 ConcurrentHashMap 和 Hashtable 的区别
 ConcurrentHashMap线程安全的具体实现方式/底层具体实现
+
+
+参考链接：
+https://gitee.com/cosen1024/Java-Interview/blob/main/Java%E9%9B%86%E5%90%88/Java%E9%9B%86%E5%90%88%E9%AB%98%E9%A2%91%E9%9D%A2%E8%AF%95%E9%A2%98.md
