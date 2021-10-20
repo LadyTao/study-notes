@@ -1,0 +1,233 @@
+[toc]
+
+#### 1. 概念
+数组类似，容器是一种基于内存的用来存放多个数据的结构，可以动态地放入多个对象。
+
+> **数组的特点：**
+1：一旦初始化就无法对长度进行修改（不方便）；
+2：数据定义后，元素的类型是确定的；
+3：数组中提供的方法很有限，对于删除、插入、寻找等操作很不方便；
+4：数组存储数据必须是有序的，元素可以重复。
+
+**容器的特点：**
+1：容器长度是可变的
+2：容器只能存引用数据类型，基本数据类型必须转为包装类才能放入
+
+**容器的框架：**
+java容器分两大类：Collection和Map。其中Collection又分为List/Set/Quene
+* Collection：一个元素序列。
+        List: 必须按插入顺序保存元素；
+        Set: 无序的不重复的元素；
+        Quene: 按照排队规则来确定元素顺序，默认是插入元素的先后顺序。
+* Map：键值对，通过键找值。
+
+![images](https://img-blog.csdnimg.cn/img_convert/4a9d3171541866ba77e2291ce41e9962.png)
+![images](https://img-blog.csdnimg.cn/img_convert/a1fdb6d75598e87a224697d12c2c2bcf.png)
+
+#### 2. Collection关键API
+```java
+// 1. add(Object o) 添加元素； addAll(Collection c) 添加c中所有元素
+// 2. size() 容器大小； isEmpty() 元素是否为空
+// 3. contains(Object o) 是否包含该元素(调用元素o对应的equals)； containsAll(Collection c) 是否包含c中所有元素
+// 4. remove(Object o) 移除该元素；removeAll(Collection c) 从当前集合移除所有c中的元素 
+// 5. retainAll(Collection c) 获取当前集合与c的交集，并赋给当前集合
+// 6. equals(Collection c) 两个集合是否相等
+// 7. toArray() 集合转为数组
+// 8. iterator() 返回Iterator对象，用于遍历集合元素。通过hasNext()与next()配合使用
+// ******************************************************************************
+// Iterator迭代器对象有一个remove方法，可以在遍历集合的同时删除某些元素。而直接用for循环在遍历的同时删除，会抛出异常：IndexOutOfBoundsException或ConcurrentModificationException。
+```
+
+#### 3. 分类
+
+##### 3.1 List
+> **对比ArrayList、LinkedList和Vector的异同：**
+> **相同点**：都实现了List接口，存储的都是有序可重复数据
+> **不同点**：
+     ArrayList: 线程不安全，效率高；底层使用Object[]存储数据；
+     LinkedList: 底层使用双向链表存储，对于频繁的插入删除操作效率会更高；
+     Vector: 效率低，线程安全；底层使用Object[]存储数据；
+
+**底层源码实现：**
+* ArrayList: 
+```java
+// 当采用空参构造器时，会给一个默认的{};
+// 如果采用ArrayList(int initialCapacity)这种初始化方式，则会new Object[initialCapacity] 这也是区别之一。
+
+/**
+如果采用空参构造器初始化ArrayList，则当第一次添加元素时，会调用grow()进行第一次扩容（因为此时底层数组为{}，长度为0，无法承载新数据），长度变为默认的10。此后，当继续添加新元素导致底层数组长度不够时，会继续扩容，此时，扩容的公式变为：oldCapacity + (oldCapacity >> 1)，也就是长度变为原来的1.5倍。
+*/
+
+// ArrayList的底层操作都是基于数组进行，不管是查找，删除等。
+```
+* LinkedList: 
+```java
+// LinkedList底层采用双向链表结构。其内部定义了一个类：
+private static class Node<E> {
+	E item;
+	Node<E> next;
+	Node<E> prev;
+
+	Node(Node<E> prev, E element, Node<E> next) {
+		this.item = element;
+		this.next = next;
+		this.prev = prev;
+	}
+}
+// 调用add()添加元素，或者remove元素时，都是对链表的操作。
+```
+* Vector:
+（略）
+
+**List特有的方法：**
+```java
+// add(index, value) 在index的位置插入value元素
+// addAll(int index, Collection c) 从index位置起，将集合c中的元素全部插入到当前集合
+// get(int index) 获取指定位置的元素
+// indexOf(Object o) 获取某元素o在集合中首次出现的位置
+// remove(int index) 删除index位置的元素
+// set(int index, Object o) 修改位置为Index的值为o
+// subList(int start, int end) 获取子集合[start, end)。当前集合不会造成影响
+```
+
+##### 3.2 Set
+> **对比HashSet、LinkedHashSet和TreeSet的异同：**
+> **相同点**：都实现了Set接口，存储的都是无序不可重复数据
+> **不同点**：
+     HashSet: 线程不安全，效率高；可以存储null值，底层采用数组+链表的方式存储
+     LinkedHashSet: 它是HashSet的子类，遍历其内部数据会按照添加的顺序展示（底层并不是有序的），对于频繁的遍历操作效率比较高
+     TreeSet: 使用红黑树存储数据，要求存入的数据类型相同，会对数据进行排序。
+     Properties是HashTable的子类，其key和value都必须是String类型。
+     
+     
+ **关于无序性：**
+ 无序性不等于随机性。Set中的元素位置由哈希值以及equals()方法共同决定；
+  **关于不可重复：**
+  相同元素只能出现一次。当添加的元素调用equals()进行判断时，不能返回true（如果是true则不回被添加进Set）
+  
+ `以HashSet为例`，当新数据a想要加入到当前Set时：
+首先调用对象a的hashCode()方法计算出哈希值，经过一种算法（详情可看HashMap的putVal()方法）计算出其在底层Array的初始索引位置index：
+* 如果此index上没有其他元素，则a添加成功
+* 如果此index上已经有其他元素，则进一步判断a与那个其他元素的哈希值是否相等，如果不相等，则a添加成功；如果相等，最后在调用对象a的equals()方法，如果返回true，添加失败；如果返回false，则添加成功。
+
+此时可能会面临相同索引位置需要放两个或多个值的问题，java是将相同位置的多个元素存为链表放入该位置的，在JDK1.8中，后来的元素被放在链表的末尾。
+
+`而LinkedHashSet`，基本与HashSet一样，只不过每次添加的元素，除了数据本身外，还新增了两个属性，保存此节点前后两个节点的地址引用。
+
+所需当自定义类的元素要添加进Set时，一般需要重写hashCode()和equals()方法，使相同的对象有相同的散列码。
+
+`TreeMap：`
+与HashSet和LinkedHashSet不同，默认情况下，TreeMap比较两个元素是否相同不再通过hashCode和equals()，而是使用compareTo(类实现Comparable接口)方法；或者在创建TreeMap时，传入定制的比较器Comparator实现类。两个同时出现，以Comparator为主。
+
+```java
+// 练习题
+class User {
+    int id;
+    String name;
+
+    public User() {
+    }
+
+    public User(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return id == user.id && name.equals(user.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name);
+    }
+}
+
+public class SetExer {
+    @Test
+    public void test1() {
+        User aa = new User(1001, "AA");
+        User bb = new User(1002, "BB");
+        HashSet set = new HashSet();
+        set.add(aa);
+        set.add(bb);
+        // aa, bb
+        System.out.println(set);
+
+        aa.name = "CC";
+        set.remove(aa);
+        // cc, bb
+        System.out.println(set);
+
+        User cc = new User(1001, "CC");
+        set.add(cc);
+        // cc, bb, cc
+        System.out.println(set);
+
+        User dd = new User(1001, "AA");
+        set.add(dd);
+        // cc, bb, cc, aa
+        System.out.println(set);
+    }
+}
+```
+##### 3.3 Map
+**对比：**
+相同点：双列数据，都是用来存储key-value类型的数据。
+不同点： 
+* HashMap: Map的主要实现类，底层使用数组+链表+红黑树，线程不安全，效率高；可存null。
+* LinkedHashMap: 内部有指向前后元素的指针，可以按照添加的顺序实现遍历；遍历的效率高。
+* TreeMap: 底层使用红黑树；可以按照key进行排序遍历。
+* Hashtable: 早期实现类，线程安全；不能存null。
+* Properties：Hashtable的子类，常用来处理配置文件。
+
+**HashMap的底层原理：**
+```java
+/**
+HashMap的底层数据结构也是数组，初始默认的数组size=16。每个位置存储的数据类型为Node，它是Map.Entry的一个子类，其包含了当前值的hash，key, value, 以及其后的另一个Node。也就是说，虽然HashMap的底层数据默认只有16位，但是由于每个位置都可以放多个元素（其实就是链表），实际可以存放超出16个元素。但是如果一个位置这个链表太长，对于查询及遍历是不方便的，还是需要扩容。
+当首次put元素时，由于创建HashMap并没有初始化数组，所以先要进行一次resize()扩容。
+根据所要添加元素的hash值寻找索引位置（(n - 1) & hash），算出当前数组该位置是否有数据，如果没有，则直接添加成功；如果有数据，先看该位置的第一个元素是否与添加值相等（比较的是key），如果相等(equals())，则替换掉原来的旧值；如果不相等，则遍历该位置的链表，一旦发现有相等的，则进行替换；如果直到最后都没有找到一个相等的key值，则在当前位置链表的最后添加新元素。
+
+在添加元素过程中，如果发现某一个位置的链表元素长度>=TREEIFY_THRESHOLD(8)，会触发是否采用红黑树的判断，如果此时底层数组长度小于MIN_TREEIFY_CAPACITY(64)，则只会进行扩容；一旦数组长度大于64，则会将此位置的链表换为红黑树存储。
+
+HashMap的最大容量是：MAXIMUM_CAPACITY = 1 << 30
+
+HashMap的扩容触发条件是：DEFAULT_LOAD_FACTOR(0.75)*capacity(默认是16)
+*/
+```
+
+**HashMap的常用方法：**
+```java
+// put(Object o1, Object o2) 添加或修改元素
+// remove(Object o) 删除key为o的元素
+// putAll(Map m) 将已有Map集合所有元素添加到当前集合
+// clear() 清空当前Map
+
+// get(Object o) 获取key为o的value值
+// containsKey(Object o) key的值为o的是否存在
+// containsValue(Object o) 是否包含指定value
+// isEmpty() 当前Map是否存在元素
+// equals(Object o) 当前Map是否与o相等（key与value都相等）
+```
+
+**TreeMap：**
+向TreeMap添加元素的时候，要求key必须是同一个类创建的对象，因为涉及到排序规则。与TreeSet相似。
+
+
+#### 4. Collections工具类
+操作List或Map的一些工具方法。
+
+
+
