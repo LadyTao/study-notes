@@ -17,7 +17,7 @@ HDFS是一个主/从（master/slave）体系架构，主要由三部分组成：
 7. 一次写入，多次读取。HDFS文件不支持对文件数据的修改，不适用于数据频繁更新的场景。
 
 #### 3. NN与SNN
-![ec53ba56fd17ff677becd706f409b4b9.jpeg](en-resource://database/897:0)
+![images](https://cdn.nlark.com/yuque/0/2021/webp/21887442/1634983317299-e3a1ee97-3730-4900-bee3-00c19fc97727.webp?x-oss-process=image%2Fresize%2Cw_881%2Climit_0)
 * 当集群首次初始化启动时，NN自动需要生成空的edits文件和fsimage文件；如果是已经存在的集群，则只需将edits和fsimage加载进内存即可。
 * 当客户端发起对文件的添加、删除、修改请求时，先与NN沟通，NN会在不断滚动的edits文件中记录下对文件的操作（未完成滚动的edits文件为edits.inprogerss，完成后起名字变为edits.xxx）。
 * edits中只是记录了这写行为，真正的执行需要在内存中修改相应的元数据。
@@ -51,7 +51,7 @@ SNN保留了上一次检查点时所有的edits和fsimage文件，理论上是�
 
 #### 5. 两个重要的流程
 2.1：HDFS文件写入
-![210f33bd3f026b9cf7d2b297beac0aa1.jpeg](en-resource://database/891:1)
+![images](https://cdn.nlark.com/yuque/0/2021/webp/21887442/1634983215955-366eb823-ae78-49cf-9918-677a26300c28.webp?x-oss-process=image%2Fresize%2Cw_711%2Climit_0)
 * 1，client向NN发起请求，NN检测文件是否已经存在，client是否有写入的权限。然后申请对该文件的租约，只有持有租约才允许写入，且租约需要定期续约。确认后返回是否可以上传。
 * 2，client负责将文件切分为block，并向NN再次发起请求，询问该block可以存在哪个DN。
 * 3，NN根据配置文件中指定的备份数量以及机架感知原理进行分配，返回可用的Dn地址，如：A, B，C。
@@ -73,7 +73,7 @@ SNN保留了上一次检查点时所有的edits和fsimage文件，理论上是�
 4：NN异常：
 GG
 2.2：HDFS文件读取
-![070db64766ed711a8675c0dc74baee10.jpeg](en-resource://database/893:1)
+![images](https://cdn.nlark.com/yuque/0/2021/webp/21887442/1634983276795-aa6dc69f-e346-41bd-a36e-065c6295ee51.webp?x-oss-process=image%2Fresize%2Cw_711%2Climit_0)
 * 1，cliect向NN发起RPC请求，确定block所在节点的列表。
 * 2，NN视情况返回部分或全部block列表。对于每个block，NN都会返回含有该block副本的DN地址。这些返回的DN地址中，NN会按照集群拓扑结构找到与client距离最近的DN，并作排序。排序有两个原则：①网络距离，②心跳时间。client会拿到一个block的多个地址，最靠前的优先级最高。
 * 3，client优先选取最近的Dn读取数据。如果客户端本身就是一个DN，则直接获取数据（短路读取）。
