@@ -1,5 +1,5 @@
 #### 1. 架构
-![4f4f9335ce67a5064c19eef314b51084.jpeg](en-resource://database/889:1)
+![images](https://cdn.nlark.com/yuque/0/2021/webp/21887442/1634982113724-0eb86ebe-05a0-44a3-9830-9d925668cd4d.webp?x-oss-process=image%2Fresize%2Cw_591%2Climit_0)
 
 HDFS是一个主/从（master/slave）体系架构，主要由三部分组成：NameNode,DataNode以及SeondaryNamenode。
 * NameNode：管理整个文件系统的元数据，每个文件对应的block信息。
