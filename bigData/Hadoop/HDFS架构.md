@@ -1,5 +1,5 @@
 #### 1. 架构
-![4f4f9335ce67a5064c19eef314b51084.jpeg](en-resource://database/889:1)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/640.jpg)
 
 HDFS是一个主/从（master/slave）体系架构，主要由三部分组成：NameNode,DataNode以及SeondaryNamenode。
 * NameNode：管理整个文件系统的元数据，每个文件对应的block信息。
@@ -13,7 +13,7 @@ HDFS 1.X时代只能有唯一的NN管理命名空间以及数据块，存在以�
 ④数据无法有效隔离，耦合性高；
 
 HDFS 2.X提出了联邦机制(Federation)。一个集群中可以出现多个NN（或NameSpace），这些NN相互独立，各自管理自己的命名空间。集群中的DataNode提供数据块共享存储功能。每个DN会向所有的NN注册且上报信息，并执行NN的指令。
-![2cf90dbb21a846089c57a7a49115122a.png](en-resource://database/1024:1)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-01_11-07-38.png)
 这么做的好处在于：
 ①NN可以水平扩展；
 ②为应用程序和用户提供命名空间卷级别的隔离（见DataNode章节），耦合性降低
@@ -37,13 +37,13 @@ block唯一标识NN中的数据块，内部有3个字段：①blockID唯一标�
 
 HDFS联邦机制下，引入了两个概念：`块池(BlockPool)`  和 `命名空间卷`：
 
-![a3312174b8f1bed12297ed460764c8a3.png](en-resource://database/1026:1)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-01_11-28-04.png)
 **块池：** 一个块池是一个NN对应的命名空间内所有的数据块组成，这个块池内的数据块可以存储在集群中所有的DN上，每个DN又可以存储集群所有块池的所有数据。每个块池之间相互独立，当一个NN故障不会影响其他NN。
 **命名空间卷：** 一个NN的命名空间以及它管理的块池称为命名空间卷，当一个NN/NameSpace被删除后，它管理的块池会从DN删除。
 ************
 **DN的逻辑结构：**
 为了支持HDFS2引入的联邦机制，DataNode的逻辑结构可以切分为如下图所示的样子：
-![4a3d9eba477056d1b8b58f2896d14aa6.png](en-resource://database/1028:1)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-01_14-23-24.png)
 从下往上分为3层，分别是数据层，逻辑层和服务层。
 * 数据层。负责在本地磁盘存储数据块的部分，包含两个模块：
 DataStorage: 管理和组织DN的磁盘存储空间，以及维护存储空间的生命周期。在Federation架构中，一个DN可以存多个块池的数据块，通过BlockPoolSliceStorage类管理单个块池。
@@ -57,7 +57,7 @@ DirectoryScanner: 定时对磁盘数据块扫描，对比内存中的元数据�
 ***************
 **DN升级机制**
 这里说的DN，实际是指整个HDFS集群，因为HDFS并不支持单独升级某一个组件，而是整体去升级的。HDFS不支持向下降级，但是允许升级过程中回滚。
-![18e6649a73def90d8b0520efadd0e431.png](en-resource://database/1030:1)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-01_15-14-52.pngg)
 升级分3步骤：
 1. 升级。升级时会将当前的current目录改为previous.tmp，然后新版本数据重建current目录。接下来建立currnt与previous.tmp中数据块文件与检验和文件之间的硬链接。最后将previous.tmp改为previous，完成升级。
 2. 回滚。主要是发生异常，回滚到旧版本。先将current目录改为removed.tmp，然后将previous目录改为current，最后删除removed.tmp目录。
@@ -72,10 +72,10 @@ DN并不会保存HDFS文件和目录的元数据，但是需要保存自身的�
     <value>/dfs/data, /dfs/data2</value>
 <property>
 ```
-![bfd346feb58e10d38dc3c051aa688235.png](en-resource://database/1032:1)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/640.jpg)
 [1] BP-xxxx-ip-time：这是一个块池目录，保存了一个块池在当前存储目录下的所有数据快。联邦机制中会有多个块池目录，其他的只有一个。这个目录会带有NN的节点的IP地址，最后还会有块池的创建时间。
 [2] VERSION：在NN和JN目录中都会有这个文件，保存了文件系统布局版本，集群ID，创建时间，还有存储类型等。下图是NN,DN,JN目录中VERION文件的差异。
-![6c4b6991ba871a85f3a715854cc62387.png](en-resource://database/1034:1)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-02_10-04-57.png)
 [3] finalized.raw：存放数据，包括数据块文件和对应的校验和文件。rbw（replica being written，正在写入副本）保存了客户端正在写入的数据块；finalized目录包含已经完成写入的数据块。由于数据块可能很多，finalized目录会以特定的目录结构管理(多级目录)。
 [4] lazyPersist：HDFS2引入的新特性，支持将临时数据写入内存，然后通过懒持久化方式写入磁盘。
 [5] dncp_lock_verification.log：记录DN最后一次确认所有数据快的内容和检验值匹配的时间。
@@ -92,7 +92,7 @@ DN保存的数据块副本有5种状态：
 
 *******
 **DataNode启动**
-![eb9c4636f5c5e22ef4bc2b84999b651e.png](en-resource://database/1036:1)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-02_10-27-52.png)
 注意到这里并没有对FsDatasetImpl对象、DataBlockScanner对象以及DirectoryScanner对象做任何的初始化操作，因为它们是在DataNode与NN握手时，在initBlockPool（）方法中完成的。
 
 *******
@@ -117,7 +117,7 @@ HDFS命名空间以"/"为根，以树的形式存储。不管是文件还是目�
 
 fsimage保存了文件系统目录树中每一个文件或目录的记录，包含该文件/目录的名称、大小、用户、用户组、修改时间、创建时间等信息。当NN重启时会读取这个文件重构命名空间。但是由于这个文件一般都很大，而且是磁盘上的一个文件，导致它基本不可能及时跟踪NN的变化(实际上默认一个小时才更新一次)，那么两次fsimage之间对NN的操作记录保存在哪里？edits文件保存的正是这份信息。HDFS客户端执行的所有操作都记录在这里，HDFS会定期将fsimage与edits文件合并以保持最新状态。
 下图是NN元数据存放的目录结构：
-![f936e938d8cac8ea712bfc9ece34b0a7.png](en-resource://database/1038:1)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/640.jpg)
 *`关于transactionId:`* 客户端每发起一次RPC请求对NN的命名空间进行修改，editlog中还有一个新的唯一的reansactionID用于记录这个操作。
 
 * edits_start_trans_id-end_trans_id：edits文件。文件名中记录了其内部transactionId的范围。
@@ -158,7 +158,7 @@ HDFS客户端要写文件需要先从NN中的租约管理器(LeaseManager)申请
 ******
 **High Availability**
 高可用机制下，通过JN协调使Standby状态的NN可以及时更新元数据。为了在状态切换时更迅速，需要DN同时向两个NN同时发送心跳以及汇报数据信息。
-![fbb0aa4459fd28a988e46147785136e4.png](en-resource://database/1040:1)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/640.jpg)
 
 HA架构中需要解决脑裂问题：两个NN同时处于Active状态导致数据丢失或误操作。HDFS提供3种隔离机制防止脑裂：
 * 共享存储隔离：同一时刻只允许一个NN向JN写入edits数据；
@@ -168,7 +168,7 @@ HA架构中需要解决脑裂问题：两个NN同时处于Active状态导致数�
 ******
 **NN的启动与停止**
 启动过程：
-![99be57a4af5bf1a4651aeb2df55851f2.png](en-resource://database/1042:1)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/640.jpg)
 
 停止流程
 (略)
