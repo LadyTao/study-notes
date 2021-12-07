@@ -72,10 +72,10 @@ DN并不会保存HDFS文件和目录的元数据，但是需要保存自身的�
     <value>/dfs/data, /dfs/data2</value>
 <property>
 ```
-![images](https://github.com/LadyTao/study-notes/blob/main/picture/640.jpg)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-02_10-04-57.png)
 [1] BP-xxxx-ip-time：这是一个块池目录，保存了一个块池在当前存储目录下的所有数据快。联邦机制中会有多个块池目录，其他的只有一个。这个目录会带有NN的节点的IP地址，最后还会有块池的创建时间。
 [2] VERSION：在NN和JN目录中都会有这个文件，保存了文件系统布局版本，集群ID，创建时间，还有存储类型等。下图是NN,DN,JN目录中VERION文件的差异。
-![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-02_10-04-57.png)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-02_10-27-52.png)
 [3] finalized.raw：存放数据，包括数据块文件和对应的校验和文件。rbw（replica being written，正在写入副本）保存了客户端正在写入的数据块；finalized目录包含已经完成写入的数据块。由于数据块可能很多，finalized目录会以特定的目录结构管理(多级目录)。
 [4] lazyPersist：HDFS2引入的新特性，支持将临时数据写入内存，然后通过懒持久化方式写入磁盘。
 [5] dncp_lock_verification.log：记录DN最后一次确认所有数据快的内容和检验值匹配的时间。
