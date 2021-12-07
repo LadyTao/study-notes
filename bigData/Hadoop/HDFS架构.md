@@ -117,7 +117,7 @@ HDFS命名空间以"/"为根，以树的形式存储。不管是文件还是目�
 
 fsimage保存了文件系统目录树中每一个文件或目录的记录，包含该文件/目录的名称、大小、用户、用户组、修改时间、创建时间等信息。当NN重启时会读取这个文件重构命名空间。但是由于这个文件一般都很大，而且是磁盘上的一个文件，导致它基本不可能及时跟踪NN的变化(实际上默认一个小时才更新一次)，那么两次fsimage之间对NN的操作记录保存在哪里？edits文件保存的正是这份信息。HDFS客户端执行的所有操作都记录在这里，HDFS会定期将fsimage与edits文件合并以保持最新状态。
 下图是NN元数据存放的目录结构：
-![images](https://github.com/LadyTao/study-notes/blob/main/picture/640.jpg)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-03_11-38-19.png)
 *`关于transactionId:`* 客户端每发起一次RPC请求对NN的命名空间进行修改，editlog中还有一个新的唯一的reansactionID用于记录这个操作。
 
 * edits_start_trans_id-end_trans_id：edits文件。文件名中记录了其内部transactionId的范围。
@@ -158,7 +158,7 @@ HDFS客户端要写文件需要先从NN中的租约管理器(LeaseManager)申请
 ******
 **High Availability**
 高可用机制下，通过JN协调使Standby状态的NN可以及时更新元数据。为了在状态切换时更迅速，需要DN同时向两个NN同时发送心跳以及汇报数据信息。
-![images](https://github.com/LadyTao/study-notes/blob/main/picture/640.jpg)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-06_16-19-43.png)
 
 HA架构中需要解决脑裂问题：两个NN同时处于Active状态导致数据丢失或误操作。HDFS提供3种隔离机制防止脑裂：
 * 共享存储隔离：同一时刻只允许一个NN向JN写入edits数据；
@@ -168,7 +168,7 @@ HA架构中需要解决脑裂问题：两个NN同时处于Active状态导致数�
 ******
 **NN的启动与停止**
 启动过程：
-![images](https://github.com/LadyTao/study-notes/blob/main/picture/640.jpg)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-07_17-29-07.png)
 
 停止流程
 (略)
