@@ -92,7 +92,7 @@ DN保存的数据块副本有5种状态：
 
 *******
 **DataNode启动**
-![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-02_10-27-52.png)
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-02_14-26-22.png)
 注意到这里并没有对FsDatasetImpl对象、DataBlockScanner对象以及DirectoryScanner对象做任何的初始化操作，因为它们是在DataNode与NN握手时，在initBlockPool（）方法中完成的。
 
 *******
