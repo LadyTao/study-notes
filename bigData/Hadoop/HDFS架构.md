@@ -176,5 +176,51 @@ HA架构中需要解决脑裂问题：两个NN同时处于Active状态导致数�
 ******
 
 #### 5. Hadoop Client
+**文件读**
+HDFS的读操作有三个层次：
+1: 网络读：最基本的方式，客户端与DN通过socket链接传输数据；
+2: 短路读：当客户端与DN同属一个物理节点时，客户端可以直接打开数据副本，无需DN转发；
+3: 零拷贝读：客户端与缓存的数据块DN在同一个物理节点时，客户端通过零拷贝方式读取数据块（缓存的数据在内存，且无序校验），效率最高。
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/hdfs-read.png)
 
-#### 6. Hadoop RPC
+1: 客户端调用DistributedFileSystem.open()打开要读取的文件；
+2: 通过RPC来调用namenode，确定文件起始块的位置；
+3: DistributedFileSystem返回一个支持文件定位的输入流FSDataInputStream对象，该对象封装了一个DFSInputStream对象，客户端对这个输入流调用read()方法；
+4: DFSInputStream连接最近的datanode，反复调用read方法，将数据从datanode传输到客户端；
+5: 到达块的末端时，DFSInputStream关闭与该datanode的连接，寻找下一个块的最佳DN节点；
+6: 客户端读取完成，调用close关闭连接。
+
+注意点：
+① 一个block副本，NN会返回给客户端一个排序好优先级的列表(根据与客户端的距离与心跳时间)，客户端优先选最靠前的且不在黑名单中的datanode地址（异常节点）。
+② 客户端是并行读取数据块的，也就是说同时有多个线程读取多个block块。
+③ 循环调用read方法读取block的时候，每次都从一个offset游标开始，读取len个字节，存入到buf[]数组中。
+
+④ 当读取数据出现校验异常时，表明当前datanode上的数据块副本出现异常，这时也会向NN汇报这个信息并切换节点；如果出现的是IO异常，则可能是网络等其他原因造成的，这时会尝试进行重试，如果重试还失败，则切换节点。
+⑤ 上面是以网络读为例讲解。
+***************************
+**文件写**
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/hdfs-write.png)
+1：客户端调用DistributedFileSystem对象调用create方法新建文件；
+2：对namenode创建一个RPC调用，在NN命名空间中新建文件；
+3：新建文件完成后，返回给客户端一个FSDataOutputStream对象，期内部的DFSoutPutStream对象负责处理namenode与datanode之间的通讯，客户端开始调用write方法写入；
+4：FSDataOutputStream 将数据分成一个一个packet包，写入内部的“数据队列”，DataStreamer负责将数据包依次流式传输到一组datanode构成的管道中；
+5：FSDataOutputStream维护着“确认队列”来等待datanode收到确认回执，收到管道中所有的datanode确认后1，将数据包从队列中删除；
+6：完成写入，close断开连接；
+7：namenode确认完成；
+
+`关于packet的发送过程：`
+客户端将数据打包成packet写入到一个队列dataQuene中，然后DataStreamer会从这个队列拉取packet，然后写入到数据管道流中的第一个datanode上。完成后将这个packet从dataQuene移除，并加入到ackQuene中。当管道中其他所有的datanode都确认完成后，则将这个packet彻底移除；如果发现下游datanode返回了失败的确认消息，则将这个packet重新移动到dataQuenen重新发送，并且客户端将出现错误的datanode从管道中剔除，向namenode申请重建datanode管道流。
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/packet_send.png)
+
+`错误处理`
+写数据时出现的错误可能有：建立管道流时下游的datanode正好出现异常；数据包发送完成后未正常收到ack确认消息；在发送数据包时出现IO异常。
+相应的处理办法一般也是分3步：关闭IO流；将ackQuene中的packet移动到dataQuene中重新发送；重新初始化管道流。要注意当需要新建管道重新发送数据时，需要有进程修改异常block的时间戳（NN也要修改），这样当异常datanode上线后其错误的block块也会被删除。
+
+#### 6. Hadoop RPC（了解）
+RPC（Remote Procedure Call Protocol）远程程序调用协议，允许本地程序像调用本地方法一样调用远程机器上的应用提供的服务。RPC采用客户端/服务器模式，请求程序就是一个客户端，服务提供程序就是一个服务器。客户端发出请求等待服务器发回响应信息；而服务端会保持睡眠状态等待客户端的请求。RPC的框架结构如下图所示：
+![images](https://github.com/LadyTao/study-notes/blob/main/picture/2021-12-08_17-07-39.png)
+* 通讯模块：传输RPC请求以及响应的网络通讯模块，可以是同步的也可以是异步的；
+* 客户端Stub程序：客户端将请求发给真实的能处理的服务端，并将返回的响应信息反序列化发送给请求程序；
+* 服务器端Stub程序：执行真实的操作，并将结果返回给客户端；
+* 请求程序：调用客户端Stub程序；
+* 服务程序：接收客户端Stub调用请求；
