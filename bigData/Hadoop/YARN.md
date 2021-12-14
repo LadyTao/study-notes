@@ -67,6 +67,7 @@ YARN中有3中资源调度器：
 
 ④动态调整(任务已提交)。修改优先级(更改到优先级更高的队列)
 > --movetoqueue 已过期，建议使用changeQuene
+> 
 > yarn application -movetoqueue application_1639385734502_0008 -queue default 
 
 所以对于公平调度模式，该如何更改其优先级呢？
