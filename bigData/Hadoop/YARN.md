@@ -47,7 +47,8 @@ YARN中有3中资源调度器：
 ![images](https://github.com/LadyTao/study-notes/blob/main/picture/drf.png)
 我们会发现在资源充足的情况下，实际分配给每个任务的资源比它申请的额度偏多一点。而当资源不够分配的情况下，就会与其实际的要求有一定的**差额**。在同一个队列中，job的差额越大，越先获得资源执行。那么就会出现任务越大，申请资源越多的任务会越容易执行，导致其他任务可能长时间等待，为了解决这个问题，可以通过**带权重的DRF**算法，它可以给每个job分配不同的权重，这样可以人为干预任务优先级。
 我们可以有多种方式控制优先级：
-①静态调整。不同队列配置不同优先级
+
+①静态调整。不同队列配置不同优先级（capacity模式）
 ```xml
 <property>
     <name>yarn.scheduler.capacity.root.hncscwc.default-application-priority</name>
