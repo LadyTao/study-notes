@@ -19,13 +19,14 @@ RM会通过其内部的Scheduler组件分配资源，Scheduler一旦完成分配
 
 （1）作业提交。client向集群提交作业，RM会生成一个作业id，返回给客户端这个id以及资源的提交路径，client接收到这些信息后将jar包，切片信息和配置文件提交到执行的资源路径(NM)。然后向RM申请运行application master。
 
-
 （2）作业初始化。RM接收请求，将该job添加到schduler调度器中。调度器根据具体的策略找到具体的NM，启动第一个container，下载client提交的资源到本地，并运行application master。
 
-
 （3）任务分配。如果作业很小，AM自己就处理了，如果不够继续向RM申请多个container。
+
 （4）任务运行。当RM通过调度器分配好container以后，AM通过联系NM启动container，运行前需要下载运行所需的资源，配置/jar/缓存等。
+
 （5）进度和状态更新。AM将监控任务的运行状态，客户端每秒向AM请求进度更新做展示。
+
 （6）作业完成。作业执行完后，AM和其对应的container会清理工作状态，并销毁？作业的执行信息会保留一段时间。
 
 
