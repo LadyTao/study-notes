@@ -1,0 +1,46 @@
+#### 组件与架构
+![99d6fdedb487c120d3525ba1225d3f48.svg+xml](en-resource://database/1087:1)
+上图展示了flink的全部组件。最重要的是其中的个这3个：
+* client: 将流式或批量处理任务编译打包成flink可以处理的jobGraph，并发送到JobManager。
+* JobManager: Flink的中央协调组件，根据不同的资源提供者(k8s,yarn,standlone)，其高可用、资源分配行为以及任务提交模式会有很大不同。
+* TaskManager: 一个或多个TaskManager，真实的任务执行组件。
+
+除了上面的3个，剩下的都是非必要的外部组件：
+* HA Service Provider: JM可以设置多个，其中一个active，剩余的standby，解决单点异常问题，常常通过 zk 或 k8s HA完成。
+* FileStorage & Persistency: 这通常用来保存checkpoint，根据部署方式不同，一般可以选择local,hdfs,s3等存储系统。
+* Resource Provider: 常见的就是YARN、k8s。通过这个组件提供不同的资源管理方式。
+* metrics Storage: 监控数据。
+* Application-level data sources and sinks: 各种连接器。
+
+
+#### 部署模式
+![d350a44f8c5aa67339041eb84a948691.svg+xml](en-resource://database/1089:1)
+三种部署模式的区别在于2点：
+①集群的生命周期以及资源隔离机制。
+②应用程序的main方法是在客户端执行还是集群(JobManager)中执行。
+
+**Application Mode**
+只有Application模式，应用程序的main方法是提交到集群中执行的。这么做的原因在于，如果有很多用户很多任务共用客户端，客户端需要本地先下载相关依赖，执行main()方法生成jobGraph，并将jobGraph和依赖发送到集群，这会使客户端的性能消耗非常严重，所以application模式解决了这个问题。
+在Application模式下，会为每个提交的任务创建一个集群，这个集群只能为这个任务服务（实际可以通过executeAsync间接完成多个任务的提交，但是基本用不到），当这个任务结束后集群被消除。它与Per-Job有着相同的资源隔离保障。
+使用Application模式提交应用有一个前提是，需要用户的程序与相关依赖可以被集群中的每个组件访问到（个人感觉这个模式有点奇怪，本质是想避免client每次提交任务分发依赖jar包，现在又需要提交者自己确保依赖的公共访问属性，是不是更加麻烦了）。
+
+**Per-Job Mode**
+相比Application模式，Per-Job的唯一不同似乎就是用户的应用程序是在客户端上执行的。其拥有比较好的资源隔离性，单个任务独享机群资源，彼此无干扰，通常是首选的生产部署方案。
+
+**Session Mode**
+多个任务共享一个集群，资源隔离性能较差。
+| 部署模式 | main执行位置 | JM是否隔离 | TM是否隔离 | 原生k8s集群是否支持| 
+|--|--|--|--|--|
+| Application Mode | JM | 是 |是 | 是 |
+| Per-Job Mode| client | 是 | 是 | 否 |
+|Session Mode| client | 否 | 否| 是 |
+
+#### 资源管理
+**YARN**
+这个没啥好讲的，只要确保yarn在2.4以上版本就行，按官网的配置来就行。三种部署模式都可以支持
+**K8S Native**
+不支持Per-Job模式。用户的jar按官网来讲需要打包进镜像，实际上不需要这么麻烦，只需要将jar上传到一个云存上，像s3或者ceph这种，通过http可以下载下来就可以，在启动任务的时候通过-C传入jar包即可。
+**Standalone**
+同样不支持Per-Job模式。这种方式可以有三种方式实现：本地/docker/k8s。需要注意的是，要与上面的k8s部署模式区分开，上面的k8s Native完全由k8s集群动态管理资源，整个集群的资源利用率非常高。但是standalone模式下，taskManager的slots数量在启动时已经定死不能在运行时改变了，所以资源的利用率差一些。
+
+
