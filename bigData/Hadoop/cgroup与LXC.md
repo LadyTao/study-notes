@@ -47,4 +47,4 @@ d)避免了准虚拟化和系统调用替换中的复杂性。
 
 
 Docker、LXC、Cgroup的结构关系：
-![81b46468c5fccbf58f81a84c6c367bd7.png](en-resource://database/1022:1)
+![image](https://github.com/LadyTao/study-notes/blob/main/bigData/Hadoop/pic/2021-11-29_15-25-53.png)
