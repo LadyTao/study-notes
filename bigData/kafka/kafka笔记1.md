@@ -19,7 +19,7 @@
 * Connector API：用于负责对接broker和外部系统之间的数据读写操作，kafka已经提供很多现成的connector实现。可以帮助建立一个可以重用的Producer或者Consumer，比如：通过基于关系型数据库的connector可以在数据表中保存每次变更；基于文件系统的connector，可以实现broker与文件之间的数据传递
 
 #### 关于partition
-![3e87246f2ff890981ecc7728e73661c5.png](en-resource://database/606:1)
+![image](https://github.com/LadyTao/study-notes/blob/main/bigData/kafka/pic/b0115056259f267a5aef7d30ab557d06e36f6ff2.png)
 
 * 一个topic可以有多个分区(partition)，消息在每个分区内部是有序的，但无法保证全局有序(如果只有一个partition则当然也是全局有序)。partition会为每条消息分配一个唯一ID，称为offset，用来标识分区中的唯一一条数据。
 * paitition主要有两个作用：扩容和并发。首先，一个topic可以有多个partition，多个partition可以分布在多个机器上，因而可以保存更多的数据；其次，多个partition可以被多个消费者消费，提高了并发性。
