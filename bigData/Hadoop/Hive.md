@@ -8,7 +8,7 @@
 > 4. 执行延迟高，不适合实时查询与点查；
 > 5. 可以处理超大数据集；
 
-![image]()
+![image](https://github.com/LadyTao/study-notes/blob/main/bigData/Hadoop/pic/hive.png)
 
 **command-line & Thrift/JDBC**
 这是两种操作Hive的方式。command line 需要在部署hive的节点上通过命令行运行任务；而thrift/jdbc通过thrift协议按照标准的JDBC远程操作。
